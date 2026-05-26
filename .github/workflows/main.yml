@@ -13,8 +13,8 @@ jobs:
       - name: Setup Environment
         run: |
           sudo apt-get update
-          # เพิ่ม coreutils และสคริปต์ที่จำเป็นต่อการบิลด์ของ Samsung
-          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev coreutils sed tr grep findutils
+          # ลบคำว่า tr ออกเรียบร้อยแล้ว เพราะมันรวมอยู่ใน coreutils แล้วครับ
+          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev coreutils sed grep findutils
 
       - name: Clone Full Kernel Source Tree
         uses: actions/checkout@v4
@@ -36,12 +36,10 @@ jobs:
 
       - name: Inject Safe System Path
         run: |
-          # มั่นใจว่า PATH ของระบบเดิม (/usr/bin, /bin) จะไม่หายไปไหนหลังจากเรียกใช้งาน ccache
           echo "PATH=/usr/lib/ccache:/usr/bin:/bin:/usr/sbin:/sbin:$PATH" >> $GITHUB_ENV
 
       - name: Run Samsung Kernel Build Script
         run: |
-          # บังคับดึงตำแหน่ง PATH ปัจจุบันอีกครั้งเพื่อความปลอดภัยสูงสุดในการรันสคริปต์
           export PATH="/usr/lib/ccache:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
           chmod +x build_kernel_GKI.sh
           ./build_kernel_GKI.sh
