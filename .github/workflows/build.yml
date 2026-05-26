@@ -1,0 +1,53 @@
+name: Build Samsung S22 Kernel
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. ดึงซอร์สโค้ดจากคลังข้อมูลของคุณ (รวมถึงไฟล์ Clang ที่อยู่ใน repo ด้วย)
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+
+      # 2. ติดตั้งเครื่องมือพื้นฐานที่จำเป็นในการคอมไพล์
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential flex bison libssl-dev libelf-dev lld llvm crossbuild-essential-arm64
+
+      # 3. เริ่มคอมไพล์ Kernel โดยชี้พาธไปที่ Clang ในตัวซอร์สโค้ด
+      - name: Build Kernel
+        run: |
+          # ตั้งค่าพาธไปยัง Clang Toolchain ที่มีอยู่ในโปรเจกต์ของคุณ
+          export CLANG_DIR="$GITHUB_WORKSPACE/samsung-r0q-resukisu-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b"
+          export PATH="$CLANG_DIR/bin:$PATH"
+          
+          # ตั้งค่าตัวแปรสำหรับคอมไพล์สถาปัตยกรรม arm64
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export CC=clang
+          
+          # เรียกใช้สคริปต์บิวด์หลักของโปรเจกต์ (จากรูปแรกเห็นมีไฟล์ build_kernel_GKI.sh)
+          # หากต้องการรันผ่านสคริปต์อัตโนมัติของตัวซอร์สโค้ด ให้ปลดคอมเมนต์บรรทัดล่างนี้ครับ:
+          # chmod +x build_kernel_GKI.sh && ./build_kernel_GKI.sh
+          
+          # หรือหากต้องการคอมไพล์แบบแมนนวลด้วยคำสั่ง make (เปิดใช้งานบรรทัดด้านล่างนี้แทน):
+          # make O=out r0q_defconfig
+          # make -j$(nproc) O=out
+
+      # 4. เก็บไฟล์ผลลัพธ์ที่ได้จากการบิวด์
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Samsung-S22-Kernel
+          path: |
+            out/arch/arm64/boot/Image.gz
+            out/arch/arm64/boot/dtbo.img
