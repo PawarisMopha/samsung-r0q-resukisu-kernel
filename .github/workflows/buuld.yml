@@ -1,7 +1,7 @@
 name: Build and Upload Kernel
 
 on:
-  workflow_dispatch: # เปิดให้กดปุ่มสั่งรันด้วยมือ (Manual) ได้จากหน้าเว็บ GitHub
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,23 +15,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
 
-            - name: Clone Full Kernel Source Tree
+      - name: Clone Full Kernel Source Tree
         uses: actions/checkout@v4
         with:
           repository: 'tcburakdemir/samsung-r0q-resukisu-kernel'
           depth: 1
-          # ปิดการดึง submodule อัตโนมัติของตัวสคริปต์ไปก่อน เพื่อไม่ให้มันค้างตอนจุดนี้
-          submodules: false 
+          submodules: 'false'
 
       - name: Fix and Update Submodules Manually
         run: |
-          # ตรวจสอบว่ามีไฟล์ .gitmodules หรือไม่ หากมีให้ลบเซกชันย่อยที่ไม่มี URL ออก
           if [ -f .gitmodules ]; then
-            # เคลียร์ค่าโครงสร้างซับโมดูลที่ไม่มี URL ทิ้ง เพื่อป้องกันคำสั่งพัง
             git config --global --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
             git config --local --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
           fi
-          # สั่งลงทะเบียนซับโมดูลที่เหลือที่สมบูรณ์เท่านั้น
           git submodule init
           git submodule update --init --recursive || true
 
@@ -44,11 +40,10 @@ jobs:
           chmod +x build_kernel_GKI.sh
           ./build_kernel_GKI.sh
 
-      # --- ขั้นตอนสำหรับการอัปโหลดไฟล์ ---
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Samsung-S22-Resukisu-Kernel # ตั้งชื่อไฟล์ดาวน์โหลดบนหน้าเว็บ
+          name: Samsung-S22-Resukisu-Kernel
           path: |
             out/arch/arm64/boot/Image
             out/*.zip
