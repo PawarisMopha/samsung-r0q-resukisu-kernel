@@ -25,11 +25,14 @@ jobs:
       # 3. เริ่มคอมไพล์ Kernel โดยชี้พาธไปที่ Clang ในตัวซอร์สโค้ด
       - name: Build Kernel
         run: |
-          # 1. ตรวจสอบและตั้งค่าพาธ Toolchain ให้ชี้ไปยังโฟลเดอร์ที่ถูกต้อง
-          # หมายเหตุ: หากโฟลเดอร์ prebuilts-master อยู่ชั้นนอกสุด ให้ลองตัด /samsung-r0q-resukisu-kernel ออก
-          export CLANG_DIR="$GITHUB_WORKSPACE/prebuilts-master/clang/host/linux-x86/clang-r416183b"
+          # 1. ติดตั้งเครื่องมือบิวด์ให้ครบถ้วนเผื่อไว้ก่อน
+          sudo apt-get update
+          sudo apt-get install -y coreutils sed grep gawk findutils
+
+          # 2. ตั้งค่าพาธของเครื่องบิวด์ให้ชี้ไปยัง Toolchain ใน Repo ของคุณ
+          export CLANG_DIR="$GITHUB_WORKSPACE/samsung-r0q-resukisu-kernel/kernel_platform/prebuilts-master/clang/host/linux-x86/clang-r416183b"
           if [ ! -d "$CLANG_DIR" ]; then
-            export CLANG_DIR="$GITHUB_WORKSPACE/samsung-r0q-resukisu-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b"
+            export CLANG_DIR="$GITHUB_WORKSPACE/kernel_platform/prebuilts-master/clang/host/linux-x86/clang-r416183b"
           fi
           
           export PATH="$CLANG_DIR/bin:$PATH"
@@ -39,19 +42,15 @@ jobs:
           export CC=clang
           export CXX=clang++
 
-          # 2. คอมเมนต์ปิดการสั่ง make ตรงๆ (ใส่ # ด้านหน้า)
-          # # make O=out r0q_defconfig
-          # # make -j$(nproc) O=out
-
-          # 3. ปลดล็อกและเรียกใช้งานสคริปต์บิวด์หลักของโปรเจกต์แทน
-          # หากไฟล์สคริปต์อยู่ในโฟลเดอร์ kernel_platform ให้เปลี่ยนพาธไปรันในนั้น
+          # 3. [จุดสำคัญ] บังคับให้สคริปต์มองเห็นคำสั่งพื้นฐานของ Linux 
+          # โดยการส่ง PATH พื้นฐานพ่วงเข้าไปในสคริปต์ตอนรันด้วย
           if [ -f "build_kernel_GKI.sh" ]; then
             chmod +x build_kernel_GKI.sh
-            ./build_kernel_GKI.sh
+            PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH" ./build_kernel_GKI.sh
           elif [ -f "kernel_platform/build_kernel_GKI.sh" ]; then
             cd kernel_platform
             chmod +x build_kernel_GKI.sh
-            ./build_kernel_GKI.sh
+            PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH" ./build_kernel_GKI.sh
           else
             echo "Error: build_kernel_GKI.sh not found!"
             exit 1
