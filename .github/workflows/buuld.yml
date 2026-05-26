@@ -13,23 +13,22 @@ jobs:
       - name: Setup Environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
+          # เพิ่ม coreutils และสคริปต์ที่จำเป็นต่อการบิลด์ของ Samsung
+          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev coreutils sed tr grep findutils
 
       - name: Clone Full Kernel Source Tree
         uses: actions/checkout@v4
         with:
           repository: 'tcburakdemir/samsung-r0q-resukisu-kernel'
           depth: 1
-          submodules: 'false'
+          submodules: false
 
       - name: Fix and Update Submodules Manually
         run: |
           git config --global --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
           git config --local --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
-          
           git rm --cached kernel_platform/common/Baseband-guard || true
           rm -rf kernel_platform/common/Baseband-guard || true
-
           if [ -f .gitmodules ]; then
             git submodule init
             git submodule update --init --recursive || true
@@ -37,10 +36,13 @@ jobs:
 
       - name: Inject Safe System Path
         run: |
-          echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
+          # มั่นใจว่า PATH ของระบบเดิม (/usr/bin, /bin) จะไม่หายไปไหนหลังจากเรียกใช้งาน ccache
+          echo "PATH=/usr/lib/ccache:/usr/bin:/bin:/usr/sbin:/sbin:$PATH" >> $GITHUB_ENV
 
       - name: Run Samsung Kernel Build Script
         run: |
+          # บังคับดึงตำแหน่ง PATH ปัจจุบันอีกครั้งเพื่อความปลอดภัยสูงสุดในการรันสคริปต์
+          export PATH="/usr/lib/ccache:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
           chmod +x build_kernel_GKI.sh
           ./build_kernel_GKI.sh
 
