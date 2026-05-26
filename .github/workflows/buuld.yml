@@ -24,7 +24,7 @@ jobs:
           
       - name: Clone Full Kernel Source Tree
         run: |
-          git clone --depth=1 https://github.com .
+          git clone --depth=1 https://github.com/tcburakdemir/samsung-r0q-resukisu-kernel.git .
 
       - name: Inject Safe System Path
         run: |
