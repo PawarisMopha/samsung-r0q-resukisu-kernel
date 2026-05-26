@@ -13,7 +13,6 @@ jobs:
       - name: Setup Environment
         run: |
           sudo apt-get update
-          # ลบคำว่า tr ออกเรียบร้อยแล้ว เพราะมันรวมอยู่ใน coreutils แล้วครับ
           sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev coreutils sed grep findutils
 
       - name: Clone Full Kernel Source Tree
@@ -37,6 +36,19 @@ jobs:
       - name: Inject Safe System Path
         run: |
           echo "PATH=/usr/lib/ccache:/usr/bin:/bin:/usr/sbin:/sbin:$PATH" >> $GITHUB_ENV
+
+      - name: Bypass Samsung Path Overwrite
+        run: |
+          # สร้างโฟลเดอร์เครื่องมือจำลองไว้ในจุดที่สคริปต์ซัมซุงเรียกใช้ (host_tools)
+          mkdir -p out/msm-kernel/host_tools
+          
+          # ลิงก์คำสั่งพื้นฐานทั้งหมดของ Ubuntu เข้าไปในโฟลเดอร์นั้นโดยตรงเพื่อไม่ให้มันหาไม่เจอ
+          ln -sf /usr/bin/nproc out/msm-kernel/host_tools/nproc
+          ln -sf /usr/bin/readlink out/msm-kernel/host_tools/readlink
+          ln -sf /bin/sed out/msm-kernel/host_tools/sed
+          ln -sf /usr/bin/tr out/msm-kernel/host_tools/tr
+          ln -sf /bin/grep out/msm-kernel/host_tools/grep
+          ln -sf /bin/awk out/msm-kernel/host_tools/awk
 
       - name: Run Samsung Kernel Build Script
         run: |
