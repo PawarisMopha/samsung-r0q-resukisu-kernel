@@ -24,12 +24,16 @@ jobs:
 
       - name: Fix and Update Submodules Manually
         run: |
+          git config --global --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
+          git config --local --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
+          
+          git rm --cached kernel_platform/common/Baseband-guard || true
+          rm -rf kernel_platform/common/Baseband-guard || true
+
           if [ -f .gitmodules ]; then
-            git config --global --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
-            git config --local --unset-all submodule.kernel_platform/common/Baseband-guard.url || true
+            git submodule init
+            git submodule update --init --recursive || true
           fi
-          git submodule init
-          git submodule update --init --recursive || true
 
       - name: Inject Safe System Path
         run: |
